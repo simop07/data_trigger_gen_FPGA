@@ -8,8 +8,8 @@ entity triggerLogic is
     THRESHOLD : NATURAL := 600;
     -- To prevent re-triggering on the same pulse
     HYSTERESIS : NATURAL := 100;
-    -- Pulse width in clock cycles (10 cycles = 100 ns @ 100 MHz)
-    PULSE_WIDTH : NATURAL := 10);
+    -- Pulse width in clock cycles (20 cycles = 200 ns @ 100 MHz)
+    PULSE_WIDTH : NATURAL := 20);
   port (
     -- Inputs
     Clock     : in STD_LOGIC;
