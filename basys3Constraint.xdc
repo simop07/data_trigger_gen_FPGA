@@ -46,14 +46,14 @@ create_clock -period 10.000 -name sys_clk_pin -waveform {0.000 5.000} -add [get_
 
 
 # LEDs
-# set_property PACKAGE_PIN U16 [get_ports {LED[0]}]
-# set_property IOSTANDARD LVCMOS33 [get_ports {LED[0]}]
-# set_property PACKAGE_PIN E19 [get_ports {LED[1]}]
-# set_property IOSTANDARD LVCMOS33 [get_ports {LED[1]}]
-# set_property PACKAGE_PIN U19 [get_ports {LED[2]}]
-# set_property IOSTANDARD LVCMOS33 [get_ports {LED[2]}]
-# set_property PACKAGE_PIN V19 [get_ports {LED[3]}]
-# set_property IOSTANDARD LVCMOS33 [get_ports {LED[3]}]
+set_property PACKAGE_PIN U16 [get_ports {led[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[0]}]
+set_property PACKAGE_PIN E19 [get_ports {led[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[1]}]
+set_property PACKAGE_PIN U19 [get_ports {led[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[2]}]
+set_property PACKAGE_PIN V19 [get_ports {led[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[3]}]
 # set_property PACKAGE_PIN W18 [get_ports {LED[4]}]
 # set_property IOSTANDARD LVCMOS33 [get_ports {LED[4]}]
 # set_property PACKAGE_PIN U15 [get_ports {LED[5]}]
@@ -142,8 +142,8 @@ set_property IOSTANDARD LVCMOS33 [get_ports BTNC]
 
 ##Pmod Header JA
 ##Bank = 15, Pin name = IO_L1N_T0_AD0N_15,					Sch name = JA1
-#set_property PACKAGE_PIN B13 [get_ports {JA[0]}]
-#set_property IOSTANDARD LVCMOS33 [get_ports {JA[0]}]
+set_property PACKAGE_PIN J1 [get_ports triggerOut]
+set_property IOSTANDARD LVCMOS33 [get_ports triggerOut]
 ##Bank = 15, Pin name = IO_L5N_T0_AD9N_15,					Sch name = JA2
 #set_property PACKAGE_PIN F14 [get_ports {JA[1]}]
 #set_property IOSTANDARD LVCMOS33 [get_ports {JA[1]}]
@@ -298,11 +298,11 @@ set_property IOSTANDARD LVCMOS33 [get_ports BTNC]
 
 ##USB-RS232 Interface
 ##Bank = 16, Pin name = ,					Sch name = UART_TXD_IN
-set_property PACKAGE_PIN B18 [get_ports RsRx]
-set_property IOSTANDARD LVCMOS33 [get_ports RsRx]
+# set_property PACKAGE_PIN B18 [get_ports RsRx]
+# set_property IOSTANDARD LVCMOS33 [get_ports RsRx]
 #Bank = 16, Pin name = ,					Sch name = UART_RXD_OUT
-# set_property PACKAGE_PIN A18 [get_ports UART_TXD]
-# set_property IOSTANDARD LVCMOS33 [get_ports UART_TXD]
+set_property PACKAGE_PIN A18 [get_ports uart_to_pc]
+set_property IOSTANDARD LVCMOS33 [get_ports uart_to_pc]
 
 
 
@@ -346,5 +346,5 @@ set_property IOSTANDARD LVCMOS33 [get_ports RsRx]
 
 # set_property BITSTREAM.CONFIG.CONFIGRATE 33 [current_design]
 
-# set_property CONFIG_VOLTAGE 3.3 [current_design]
-# set_property CFGBVS VCCO [current_design]
+set_property CONFIG_VOLTAGE 3.3 [current_design]
+set_property CFGBVS VCCO [current_design]
