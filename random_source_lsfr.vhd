@@ -16,15 +16,19 @@ architecture Rtl of random_source_lsfr is
 
 begin
 
-  process (Clock, Reset)
+  process (Clock)
   begin
-    if Reset = '1' then
-      state <= Seed;
 
-    elsif rising_edge(Clock) then
-      -- 20-bit LFSR source using Galois primitive polynomial x^20 + x^17 + 1
-      state <= state(18 downto 0) &
-               (state(19) xor state(16));
+    if rising_edge(Clock) then
+
+      if Reset = '1' then
+        state <= Seed;
+      else
+        -- 20-bit LFSR source using Galois primitive polynomial x^20 + x^17 + 1
+        state <= state(18 downto 0) &
+                 (state(19) xor state(16));
+
+      end if;
     end if;
   end process;
 

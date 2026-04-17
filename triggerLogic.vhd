@@ -39,42 +39,44 @@ architecture Rtl of triggerLogic is
 
 begin
 
-  process (Clock, Reset)
+  process (Clock)
   begin
 
-    if Reset = '1' then
-      trg_loc <= '0';
-      toState <= OutPulse;
-      width_counter <= 0;
+    if rising_edge(Clock) then
+      if Reset = '1' then
+        trg_loc <= '0';
+        toState <= OutPulse;
+        width_counter <= 0;
+      else
 
-    elsif rising_edge(Clock) then
-      case toState is
-        when OutPulse =>
-          trg_loc <= '0';
-          if unsigned(Adc_value) >= THRESHOLD_U then
+        case toState is
+          when OutPulse =>
+            trg_loc <= '0';
+            if unsigned(Adc_value) >= THRESHOLD_U then
+              trg_loc <= '1';
+              width_counter <= 0;
+              toState <= InPulse;
+            end if;
+
+          when InPulse =>
             trg_loc <= '1';
-            width_counter <= 0;
-            toState <= InPulse;
-          end if;
+            if width_counter < PULSE_WIDTH then
+              width_counter <= width_counter + 1;
+            else
+              toState <= Lockout;
+            end if;
 
-        when InPulse =>
-          trg_loc <= '1';
-          if width_counter < PULSE_WIDTH then
-            width_counter <= width_counter + 1;
-          else
-            toState <= Lockout;
-          end if;
+          when Lockout =>
+            trg_loc <= '0';
+            if unsigned(Adc_value) <= HYSTERESIS_U then
+              toState <= OutPulse;
+            end if;
 
-        when Lockout =>
-          trg_loc <= '0';
-          if unsigned(Adc_value) <= HYSTERESIS_U then
+          when others =>
             toState <= OutPulse;
-          end if;
+        end case;
 
-        when others =>
-          toState <= OutPulse;
-      end case;
-
+      end if;
     end if;
   end process;
 
