@@ -114,7 +114,7 @@ begin
               pulse_max <= new_amp;
               arrival_counter <= (others => '0');
 
-              -- Randomize next arrival [0,1_048_576] + 10_000_000 => [10_000_000,11_048_576] (~10-110 ms)
+              -- Randomize next arrival [0,1_048_576] + 10_000_000 => [10_000_000,11_048_576] (~100-110 ms)
               arrival_target <= resize(unsigned(lsfr(19 downto 0)), 24)
                                 + to_unsigned(10_000_000, 24);
 
