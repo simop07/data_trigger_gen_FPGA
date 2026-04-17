@@ -11,7 +11,6 @@
 --  led[0]      | U16      | LD0                   | Active muon pulse
 --  led[1]      | E19      | LD1                   | Shooted trigger
 --  led[2]      | U19      | LD2                   | UART busy
---  led[3]      | V19      | LD3                   | Armed system
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -23,7 +22,7 @@ entity top is
     BTNC       : in  STD_LOGIC; -- High when pressed
     triggerOut : out STD_LOGIC; -- JA1 Pmod
     uart_to_pc : out STD_LOGIC; -- UART transmission;
-    led        : out STD_LOGIC_VECTOR(3 downto 0)
+    led        : out STD_LOGIC_VECTOR(2 downto 0)
   );
 end entity;
 
@@ -113,19 +112,17 @@ begin
   led(0) <= in_pulse_stretched; -- From 550 ns -> 50 ms
   led(1) <= trg_out_stretched; -- From 200 ns -> 50 ms
   led(2) <= uart_busy; -- UART busy
-  led(3) <= '0'; -- LD3: sistema armato (TODO)
 
   triggerOut <= trg_out_loc;
 
   -- Send ADC packet at the trigger edge
-  process (Clock)
+  process (CLK)
   begin
-    if rising_edge(Clock) then
+    if rising_edge(CLK) then
 
       if SyncStableReset = '1' then
         send_packet_loc <= '0';
         trg_prev <= '1';
-        trg_out_loc <= '0';
         adc_val_latched <= (others => '0');
       else
 
