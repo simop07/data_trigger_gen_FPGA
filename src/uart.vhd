@@ -127,6 +127,7 @@ begin
               byte_idx <= byte_idx + 1;
               tx_state <= LOAD;
             end if;
+
           when others =>
             tx_state <= IDLE;
         end case;

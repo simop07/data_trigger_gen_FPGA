@@ -93,7 +93,6 @@ begin
 
         case state is
 
-            -- ----------------------------------------------------------------
           when BASELINE =>
             pulse_val <= (others => '0');
             arrival_counter <= arrival_counter + 1;
@@ -122,17 +121,17 @@ begin
               state <= RISE;
             end if;
 
-            -- ----------------------------------------------------------------
           when RISE =>
             rise_counter <= rise_counter + 1;
 
+            -- Rise duration fixed by rise_counter
             if rise_counter >= rise_max then
               -- Force the value to exactly pulse_max on the last rise cycle
               next_pulse_val := pulse_max;
               rise_counter <= (others => '0');
               state <= DECAY;
             else
-              next_pulse_val := pulse_val + shift_right(pulse_max, 2); -- +pulse_max/4 per cycle
+              next_pulse_val := pulse_val + shift_right(pulse_max, 2); -- + pulse_max/4 per cycle
             end if;
 
             pulse_val <= next_pulse_val;
@@ -146,7 +145,6 @@ begin
               adc_loc <= adc_sum(11 downto 0);
             end if;
 
-            -- ----------------------------------------------------------------
           when DECAY =>
             -- 15/16 * pulse_val, meaning decay lasts ~ 500 ns
             decay_val := pulse_val - shift_right(pulse_val, 4); -- 15/16 * pulse_val
@@ -170,7 +168,6 @@ begin
               end if;
             end if;
 
-            -- ----------------------------------------------------------------
           when others =>
             state <= BASELINE;
 
