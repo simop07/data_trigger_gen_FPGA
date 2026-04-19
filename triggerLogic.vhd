@@ -53,14 +53,13 @@ begin
           when OutPulse =>
             trg_loc <= '0';
             if unsigned(Adc_value) >= THRESHOLD_U then
-              trg_loc <= '1';
               width_counter <= 0;
               toState <= InPulse;
             end if;
 
           when InPulse =>
             trg_loc <= '1';
-            if width_counter < PULSE_WIDTH then
+            if width_counter < PULSE_WIDTH - 1 then
               width_counter <= width_counter + 1;
             else
               toState <= Lockout;
