@@ -11,6 +11,8 @@
 --  led[0]      | U16      | LD0                   | Active muon pulse
 --  led[1]      | E19      | LD1                   | Shooted trigger
 --  led[2]      | U19      | LD2                   | UART busy
+--  led[3]      | V19      | LD3                   | Trigger acknowledge
+--  led[4]      | W18      | LD4                   | FIFO almost full
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -22,22 +24,40 @@ entity top is
     BTNC       : in  STD_LOGIC; -- High when pressed
     triggerOut : out STD_LOGIC; -- JA1 Pmod
     uart_to_pc : out STD_LOGIC; -- UART transmission;
-    led        : out STD_LOGIC_VECTOR(2 downto 0)
+    led        : out STD_LOGIC_VECTOR(4 downto 0)
   );
 end entity;
 
 architecture rtl of top is
 
+  -- ADC data path signals
   signal adc_val_loc : STD_LOGIC_VECTOR(11 downto 0) := (others => '0');
   signal adc_val_latched : STD_LOGIC_VECTOR(11 downto 0) := (others => '0');
-  signal trg_out_loc : STD_LOGIC := '0';
+  signal adc_fifo_in : STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
+  signal adc_fifo_out : STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
+
+  -- Trigger and in_pulse signals
   signal in_pulse_loc : STD_LOGIC := '0';
-  signal trg_out_stretched : STD_LOGIC := '0';
   signal in_pulse_stretched : STD_LOGIC := '0';
+  signal trg_out_loc : STD_LOGIC := '0';
+  signal trg_out_stretched : STD_LOGIC := '0';
+
+  -- Reset and communication signals
   signal SyncStableReset : STD_LOGIC := '0';
   signal uart_busy : STD_LOGIC := '0';
   signal send_packet_loc : STD_LOGIC := '0';
-  signal trg_prev : STD_LOGIC := '1';
+
+  -- FIFO signals for writing and reading
+  signal full_loc : STD_LOGIC := '0';
+  signal almost_full_loc : STD_LOGIC := '0';
+  signal wr_ack_loc : STD_LOGIC := '0';
+  signal wr_ack_loc_stretched : STD_LOGIC := '0';
+  signal empty_loc : STD_LOGIC := '1';
+  signal read_en_loc : STD_LOGIC := '0';
+  signal data_ready : STD_LOGIC := '0';
+  signal wr_en_loc : STD_LOGIC := '0';
+  constant TickPeriodRead : unsigned(31 downto 0) := to_unsigned(2_000, 32); -- 20 us @ 100 MHz
+  signal PeriodicReadPulse : STD_LOGIC := '0';
 
 begin
 
@@ -108,35 +128,100 @@ begin
       LongPulse => trg_out_stretched
     );
 
+  StretchInWrAck : entity work.LongerPulse
+    generic map(
+      DURATION => 5_000_000 -- 50 ms @ 100 MHz
+    )
+    port map(
+      Clock     => CLK,
+      Reset     => SyncStableReset,
+      Pulse     => wr_ack_loc,
+      LongPulse => wr_ack_loc_stretched
+    );
+
   -- LEDs
   led(0) <= in_pulse_stretched; -- From 550 ns -> 50 ms
   led(1) <= trg_out_stretched; -- From 200 ns -> 50 ms
   led(2) <= uart_busy; -- UART busy
+  led(3) <= wr_ack_loc_stretched; -- Write acknowledge stretched
+  led(4) <= almost_full_loc; -- FIFO almost full
 
+  -- Output trigger
   triggerOut <= trg_out_loc;
 
-  -- Send ADC packet at the trigger edge
+  -- Use 16-bits adc for FIFO
+  adc_fifo_in <= x"0" & adc_val_loc;
+
+  FIFO : entity work.fifo_generator_0
+    port map(
+      -- Inputs
+      clk   => CLK,
+      srst  => SyncStableReset,
+      din   => adc_fifo_in,
+      wr_en => wr_en_loc,
+      rd_en => read_en_loc,
+
+      -- Outputs
+      dout        => adc_fifo_out,
+      full        => full_loc,
+      almost_full => almost_full_loc,
+      wr_ack      => wr_ack_loc,
+      empty       => empty_loc
+    );
+
+  -- Write ADC packets on FIFO
+  process (CLK)
+  begin
+    if rising_edge(CLK) then
+      if SyncStableReset = '1' then
+        wr_en_loc <= '0';
+      else
+        -- Default behaviour: write nothing
+        wr_en_loc <= '0';
+
+        -- Write on FIFO when in_pulse is asserted and FIFO is not almost full
+        if in_pulse_loc = '1' and almost_full_loc = '0' then
+          wr_en_loc <= '1';
+        end if;
+
+      end if;
+    end if;
+  end process;
+
+  -- Generate periodic read every TickPeriodRead ticks
+  PerRead : entity work.periodicTick
+    port map(
+      Clock      => CLK,
+      Reset      => SyncStableReset,
+      TickPeriod => TickPeriodRead,
+      Tick       => PeriodicReadPulse
+    );
+
+  -- Read ADC data from FIFO and transfer it via UART
   process (CLK)
   begin
     if rising_edge(CLK) then
 
       if SyncStableReset = '1' then
-        send_packet_loc <= '0';
-        trg_prev <= '1';
         adc_val_latched <= (others => '0');
+        send_packet_loc <= '0';
+        read_en_loc <= '0';
+        data_ready <= '0';
       else
+        -- Default behaviour: do not transfer data
+        send_packet_loc <= '0';
 
-        send_packet_loc <= '0'; -- Default behaviour
+        -- Read FIFO periodically when FIFO is not empty and UART is not busy
+        read_en_loc <= PeriodicReadPulse and (not empty_loc) and (not uart_busy);
 
-        if trg_out_loc = '1' and trg_prev = '0' then
-          adc_val_latched <= adc_val_loc;
+        -- The standard read operation provides data on the cycle after it is requested
+        data_ready <= read_en_loc;
 
-          if uart_busy = '0' then
-            send_packet_loc <= '1';
-          end if;
+        if data_ready = '1' then
+          adc_val_latched <= adc_fifo_out(11 downto 0);
+          send_packet_loc <= '1';
+
         end if;
-
-        trg_prev <= trg_out_loc;
       end if;
     end if;
   end process;
