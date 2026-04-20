@@ -41,7 +41,7 @@ architecture Rtl of muonGenerator is
   signal pulse_val : unsigned(11 downto 0) := (others => '0');
 
   -- Counter for pulse rise time
-  signal rise_counter : unsigned(2 downto 0) := (others => '0');
+  signal rise_counter : unsigned(3 downto 0) := (others => '0');
 
   -- Maximum pulse rise time
   signal rise_max : unsigned(3 downto 0) := to_unsigned(8, 4); -- 90 ns @ 100 MHz
