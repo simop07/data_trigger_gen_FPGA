@@ -11,7 +11,7 @@
 --  led[0]      | U16      | LD0                   | Active muon pulse
 --  led[1]      | E19      | LD1                   | Shooted trigger
 --  led[2]      | U19      | LD2                   | UART busy
---  led[3]      | V19      | LD3                   | Trigger acknowledge
+--  led[3]      | V19      | LD3                   | Write acknowledge
 --  led[4]      | W18      | LD4                   | FIFO almost full
 
 library IEEE;

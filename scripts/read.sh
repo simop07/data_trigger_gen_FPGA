@@ -30,7 +30,7 @@ EOF_MARK = 0x55
 def main():
 
     # Opening the serial port as a binary file .rb. buffering=0 ensures data is read
-    immediately as it arrives rather than waiting for a buffer to fill.
+    # immediately as it arrives rather than waiting for a buffer to fill
     with open(dev, "rb", buffering=0) as f:
 
         # Creating mutable array of bytes
