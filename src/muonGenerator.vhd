@@ -124,14 +124,14 @@ begin
           when RISE =>
             rise_counter <= rise_counter + 1;
 
-            -- Rise duration fixed by rise_counter
+            -- Rise duration fixed by rise_max
             if rise_counter >= rise_max then
               -- Force the value to exactly pulse_max on the last rise cycle
               next_pulse_val := pulse_max;
               rise_counter <= (others => '0');
               state <= DECAY;
             else
-              next_pulse_val := pulse_val + shift_right(pulse_max, 4); -- += pulse_max/8 per cycle
+              next_pulse_val := pulse_val + shift_right(pulse_max, 3); -- += pulse_max/8 per cycle
             end if;
 
             pulse_val <= next_pulse_val;
