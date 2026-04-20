@@ -13,6 +13,7 @@
 --  led[2]      | U19      | LD2                   | UART busy
 --  led[3]      | V19      | LD3                   | Write acknowledge
 --  led[4]      | W18      | LD4                   | FIFO almost full
+--  led[5]      | U15      | LD5                   | Reset button
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -24,7 +25,7 @@ entity top is
     BTNC       : in  STD_LOGIC; -- High when pressed
     triggerOut : out STD_LOGIC; -- JA1 Pmod
     uart_to_pc : out STD_LOGIC; -- UART transmission;
-    led        : out STD_LOGIC_VECTOR(4 downto 0)
+    led        : out STD_LOGIC_VECTOR(5 downto 0)
   );
 end entity;
 
@@ -145,6 +146,7 @@ begin
   led(2) <= uart_busy; -- UART busy
   led(3) <= wr_ack_loc_stretched; -- Write acknowledge stretched
   led(4) <= almost_full_loc; -- FIFO almost full
+  led(5) <= SyncStableReset; -- Reset button
 
   -- Output trigger
   triggerOut <= trg_out_loc;
