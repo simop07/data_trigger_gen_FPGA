@@ -5,14 +5,14 @@ entity random_source_lsfr is
   port (
     Clock        : in  STD_LOGIC;
     Reset        : in  STD_LOGIC;
-    Seed         : in  STD_LOGIC_VECTOR(19 downto 0);
-    RandomNumber : out STD_LOGIC_VECTOR(19 downto 0)
+    Seed         : in  STD_LOGIC_VECTOR(23 downto 0);
+    RandomNumber : out STD_LOGIC_VECTOR(23 downto 0)
   );
 end entity random_source_lsfr;
 
 architecture Rtl of random_source_lsfr is
 
-  signal state : STD_LOGIC_VECTOR(19 downto 0) := x"ABCDE";
+  signal state : STD_LOGIC_VECTOR(23 downto 0) := x"ABCDEF";
 
 begin
 
@@ -24,9 +24,10 @@ begin
       if Reset = '1' then
         state <= Seed;
       else
-        -- 20-bit LFSR source using Galois primitive polynomial x^20 + x^17 + 1
-        state <= state(18 downto 0) &
-                 (state(19) xor state(16));
+        -- 24-bit LFSR using Galois primitive polynomial x^24 + x^23 + x^22 + x^17 + 1
+        -- Taps at positions 23, 22, 21, 16 (0-based)
+        state <= state(22 downto 0) &
+                 (state(23) xor state(22) xor state(21) xor state(16));
 
       end if;
     end if;

@@ -5,8 +5,9 @@ use IEEE.numeric_std.all;
 entity muonGenerator is
   port (
     -- Inputs
-    Clock : in STD_LOGIC;
-    Reset : in STD_LOGIC;
+    Clock  : in STD_LOGIC;
+    Reset  : in STD_LOGIC;
+    Switch : in STD_LOGIC;
 
     -- Outputs
     Adc_value : out STD_LOGIC_VECTOR(11 downto 0);
@@ -17,8 +18,8 @@ end entity muonGenerator;
 architecture Rtl of muonGenerator is
 
   -- Signals for random vector
-  signal Seed : STD_LOGIC_VECTOR(19 downto 0) := x"ABCDE";
-  signal lsfr : STD_LOGIC_VECTOR(19 downto 0);
+  signal Seed : STD_LOGIC_VECTOR(23 downto 0) := x"ABCDEF";
+  signal lsfr : STD_LOGIC_VECTOR(23 downto 0);
 
   -- States of the pulse
   type Pulse_state is (BASELINE, RISE, DECAY);
@@ -28,8 +29,8 @@ architecture Rtl of muonGenerator is
   signal noise : unsigned(7 downto 0) := (others => '0');
 
   -- Time elapsing before next muon pulse arrives (at 100 MHz, every 10 ms <=> 1_000_000 clocks)
-  signal arrival_counter : unsigned(23 downto 0) := (others => '0');
-  signal arrival_target : unsigned(23 downto 0) := to_unsigned(300000, 24);
+  signal arrival_counter : unsigned(31 downto 0) := (others => '0');
+  signal arrival_target : unsigned(31 downto 0) := to_unsigned(300000, 32);
 
   -- Adc local signal
   signal adc_loc : unsigned(11 downto 0) := (others => '0');
@@ -50,7 +51,7 @@ architecture Rtl of muonGenerator is
 
 begin
 
-  -- Generate 20-bit random vector [0,1048575]
+  -- Generate 24-bit random vector [0,16_777_215]
   LSFR_RND : entity work.random_source_lsfr
     port map(
       Clock        => Clock,
@@ -75,7 +76,7 @@ begin
         state <= BASELINE;
         adc_loc <= (others => '0');
         arrival_counter <= (others => '0');
-        arrival_target <= to_unsigned(300000, 24);
+        arrival_target <= to_unsigned(300000, 32);
         pulse_max <= (others => '0');
         pulse_val <= (others => '0');
         rise_counter <= (others => '0');
@@ -113,9 +114,15 @@ begin
               pulse_max <= new_amp;
               arrival_counter <= (others => '0');
 
-              -- Randomize next arrival [0,1_048_576] + 10_000_000 => [10_000_000,11_048_576] (~100-110 ms)
-              arrival_target <= resize(unsigned(lsfr(19 downto 0)), 24)
-                                + to_unsigned(10_000_000, 24);
+              if Switch = '0' then
+                -- Randomize next arrival [0,16_777_216] + 10_000_000 => [10_000_000,26_777_216] (~100-260 ms)
+                arrival_target <= resize(unsigned(lsfr(24 downto 0)), 32)
+                                  + to_unsigned(10_000_000, 32);
+              else
+                -- Randomize next arrival [0,8_191] + 100 => [100,8_291] (~1-82 us)
+                arrival_target <= resize(unsigned(lsfr(12 downto 0)), 32)
+                                  + to_unsigned(100, 32);
+              end if;
 
               rise_counter <= (others => '0');
               state <= RISE;

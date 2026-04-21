@@ -3,7 +3,7 @@
 -- =======================================================================
 --
 --  Signal      | FPGA pin | Physical connector    | Info
--- -------------|----------|-----------------------|---------------------
+-- -------------|----------|-----------------------|----------------------
 --  CLK         | W5       | Onboard oscillator    | Dedicated 100 MHz
 --  BTNC        | U18      | Button btnC (central) | Active-HIGH
 --  trigger_out | J1       | PMOD JA, pin 1 (left) | -> GPIO Altera board
@@ -14,6 +14,7 @@
 --  led[3]      | V19      | LD3                   | Write acknowledge
 --  led[4]      | W18      | LD4                   | FIFO almost full
 --  led[5]      | U15      | LD5                   | Reset button
+--  sw          | V17      | SW0                   | Rapid/Slow mode
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -23,6 +24,7 @@ entity top is
   port (
     CLK        : in  STD_LOGIC; -- 100 MHz clock
     BTNC       : in  STD_LOGIC; -- High when pressed
+    sw         : in  STD_LOGIC; -- Change generator rate
     triggerOut : out STD_LOGIC; -- JA1 Pmod
     uart_to_pc : out STD_LOGIC; -- UART transmission;
     led        : out STD_LOGIC_VECTOR(5 downto 0)
@@ -66,6 +68,7 @@ begin
     port map(
       Clock     => CLK,
       Reset     => SyncStableReset,
+      Switch    => sw,
       Adc_value => adc_val_loc,
       In_pulse  => in_pulse_loc
     );
@@ -141,8 +144,12 @@ begin
     );
 
   -- LEDs
-  led(0) <= in_pulse_stretched; -- From 550 ns -> 50 ms
-  led(1) <= trg_out_stretched; -- From 200 ns -> 50 ms
+  -- Stretch from 600 ns to 50 ms if in slow mode
+  led(0) <= in_pulse_stretched when sw = '0' else
+            in_pulse_loc;
+  -- Stretch from 200 ns to 50 ms if in slow mode
+  led(1) <= trg_out_stretched when sw = '0' else
+            trg_out_loc;
   led(2) <= uart_busy; -- UART busy
   led(3) <= wr_ack_loc_stretched; -- Write acknowledge stretched
   led(4) <= almost_full_loc; -- FIFO almost full
@@ -181,9 +188,10 @@ begin
         -- Default behaviour: write nothing
         wr_en_loc <= '0';
 
-        -- Write on FIFO when in_pulse is asserted and FIFO is not almost full
+        -- Write on FIFO when in_pulse is asserted, FIFO is not almost full
+        -- and slow mode is activated
         if in_pulse_loc = '1' and almost_full_loc = '0' then
-          wr_en_loc <= '1';
+          wr_en_loc <= not sw;
         end if;
 
       end if;
@@ -213,15 +221,19 @@ begin
         -- Default behaviour: do not transfer data
         send_packet_loc <= '0';
 
-        -- Read FIFO periodically when FIFO is not empty and UART is not busy
-        read_en_loc <= PeriodicReadPulse and (not empty_loc) and (not uart_busy);
+        -- If Switch is off (slow mode is activated) read and send signals
+        if sw = '0' then
 
-        -- The standard read operation provides data on the cycle after it is requested
-        data_ready <= read_en_loc;
+          -- Read FIFO periodically when FIFO is not empty and UART is not busy
+          read_en_loc <= PeriodicReadPulse and (not empty_loc) and (not uart_busy);
 
-        if data_ready = '1' then
-          adc_val_latched <= adc_fifo_out(11 downto 0);
-          send_packet_loc <= '1';
+          -- The standard read operation provides data on the cycle after it is requested
+          data_ready <= read_en_loc;
+
+          if data_ready = '1' then
+            adc_val_latched <= adc_fifo_out(11 downto 0);
+            send_packet_loc <= '1';
+          end if;
 
         end if;
       end if;
