@@ -60,7 +60,7 @@ def main():
                     b2 = buf[2]
 
                     adc = ((b1 & 0x0F) << 8) | b2
-                    print(f"  Event {pack_counter}: {adc} ADC", flush=True)
+                    print(adc, flush=True)
 
                     # Clear buffer waiting for next event and increase counter
                     buf.clear()
