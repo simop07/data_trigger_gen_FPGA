@@ -116,7 +116,7 @@ begin
 
               if Switch = '0' then
                 -- Randomize next arrival [0,16_777_216] + 10_000_000 => [10_000_000,26_777_216] (~100-260 ms)
-                arrival_target <= resize(unsigned(lsfr(24 downto 0)), 32)
+                arrival_target <= resize(unsigned(lsfr(23 downto 0)), 32)
                                   + to_unsigned(10_000_000, 32);
               else
                 -- Randomize next arrival [0,8_191] + 100 => [100,8_291] (~1-82 us)
