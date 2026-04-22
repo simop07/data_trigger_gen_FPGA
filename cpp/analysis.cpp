@@ -106,7 +106,7 @@ void waveformAnalysis() {
       ++column;
     }
 
-    int nMissing = static_cast<int>((deltaT / 10) - 1);
+    int nMissing = static_cast<int>(deltaT / 10);
 
     // Fill empty ADC with average of noise with dummy value
     for (int i = 0; i < nMissing; i++) {
