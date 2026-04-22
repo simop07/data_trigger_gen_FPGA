@@ -16,7 +16,7 @@
 #include "waveformAnalysisPos.hpp"
 
 // Define global constants
-constexpr int nMinAnalysedRows{2};    // Minimum EXCLUDED
+constexpr int nMinAnalysedRows{2};     // Minimum EXCLUDED
 constexpr int nMaxAnalysedRows{1000};  // Maximum INCLUDED
 
 void setFitStyle() {
@@ -108,9 +108,9 @@ void waveformAnalysis() {
 
     int nMissing = static_cast<int>((deltaT / 10) - 1);
 
-    // Fill empty ADC with NaN
+    // Fill empty ADC with average of noise with dummy value
     for (int i = 0; i < nMissing; i++) {
-      samples.push_back(100);
+      samples.push_back(110);
     }
     samples.push_back(adc_value);
     ++row;
@@ -340,12 +340,11 @@ void waveformTotal() {
 
   const double samplePeriod = 10.0;
 
-  // Usiamo due vector per memorizzare solo i punti reali esistenti
   std::vector<double> samples;
   std::vector<double> times;
 
   int row = 0;
-  double currentTime = 0.0;  // Tracker del tempo assoluto
+  double currentTime = 0.0;
 
   while (std::getline(infile, line)) {
     if (row < nMinAnalysedRows) {
@@ -368,14 +367,15 @@ void waveformTotal() {
         ++column;
         continue;
       }
-      if (column == 0) adc_value = std::stod(item);
-      if (column == 1) deltaT = std::stod(item);
+      if (column == 0) {
+        adc_value = std::stod(item);
+      }
+      if (column == 1) {
+        deltaT = std::stod(item);
+      }
       ++column;
     }
 
-    // Invece di riempire i sample mancanti con 100,
-    // aggiorniamo il tempo assoluto basandoci sul deltaT letto.
-    // Se deltaT > samplePeriod, si creerà naturalmente un "salto" nel grafico.
     currentTime += deltaT;
 
     samples.push_back(adc_value);
@@ -386,7 +386,6 @@ void waveformTotal() {
 
   setFitStyle();
 
-  // Creiamo il grafico solo con i punti presenti
   TGraph *g = new TGraph(samples.size(), times.data(), samples.data());
 
   g->SetTitle("Reconstructed waveform; Time [ns]; ADC Counts");
@@ -394,15 +393,10 @@ void waveformTotal() {
   g->SetMarkerColor(kBlack);
   g->SetLineWidth(3);
   g->SetMarkerStyle(20);
-  g->SetMarkerSize(
-      1);  // Ridotto un po' per leggibilità, ma imposta pure a 3 se preferisci
+  g->SetMarkerSize(1);
 
   c2->cd();
 
-  // "APL" disegna assi, punti e linee.
-  // Se vuoi vedere il "vuoto" netto senza linee che collegano punti lontani,
-  // usa "AP" (solo punti). Con "AL" ROOT tirerà una linea retta tra i due punti
-  // distanti.
   g->Draw("AL");
 
   file2->cd();
