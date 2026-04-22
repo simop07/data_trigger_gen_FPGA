@@ -73,6 +73,13 @@ architecture rtl of top is
 
 begin
 
+  ILA0 : entity work.ila_0
+    port map(
+      clk       => CLK,
+      probe0(0) => in_pulse_loc,
+      probe1(0) => trg_out_loc
+    );
+
   MuonGenerator : entity work.muonGenerator
     port map(
       Clock     => CLK,
