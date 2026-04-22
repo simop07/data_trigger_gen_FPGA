@@ -1,4 +1,5 @@
 #include <fstream>
+#include <limits>
 #include <sstream>
 
 #include "TCanvas.h"
@@ -81,7 +82,36 @@ void waveformAnalysis() {
     if (row >= nMaxAnalysedRows) {
       break;
     }
-    samples.push_back(std::stod(line));
+
+    // Read column
+    std::stringstream ss(line);
+    std::string item;
+    int column{0};
+    double adc_value{};
+    double deltaT{};
+
+    while (std::getline(ss, item, '\t')) {
+      if (item.empty()) {
+        ++column;
+        continue;
+      }
+
+      if (column == 0) {
+        adc_value = std::stod(item);  // ADC counts
+      }
+
+      if (column == 1) {
+        deltaT = std::stod(item);  // DeltaT in [ns]
+      }
+      ++column;
+    }
+
+    int nMissing = static_cast<int>((deltaT / 10) - 1);
+
+    // Fill empty ADC with NaN
+    for (int i = 0; i < nMissing; i++) {
+      samples.push_back(std::numeric_limits<double>::quiet_NaN());
+    }
     ++row;
   }
 

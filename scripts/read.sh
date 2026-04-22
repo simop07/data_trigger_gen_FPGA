@@ -36,8 +36,8 @@ def main():
         # Creating mutable array of bytes
         buf = bytearray()
 
-        # Event counter
-        pack_counter = 0
+        # Print adc and time
+        print("ADC", "Time difference between current pulse and previous one [ns]", sep="\t", flush=True) 
 
         while True:
             b = f.read(1) # read 1 byte at a time
@@ -50,21 +50,25 @@ def main():
             buf.append(b[0])
 
             # Keep length of array fixed
-            if len(buf) > 4:
+            if len(buf) > 8:
                 buf.pop(0)
 
             # Search for valid data frame: AA xx xx 55
-            if len(buf) == 4:
-                if buf[0] == SOF and buf[3] == EOF_MARK:
+            if len(buf) == 6:
+                if buf[0] == SOF and buf[5] == EOF_MARK:
                     b1 = buf[1]
                     b2 = buf[2]
+                    b3 = buf[3]
+                    b4 = buf[4]
+                    b5 = buf[5]
 
-                    adc = ((b1 & 0x0F) << 8) | b2
-                    print(adc, flush=True)
+                    adc = (b1 << 4) | (b2 >> 4)
+                    time_ns = ((b3 << 8) | b4) * 10 # In [ns]
+
+                    print(adc, time_ns, sep="\t", flush=True)
 
                     # Clear buffer waiting for next event and increase counter
                     buf.clear()
-                    pack_counter += 1
 
 if __name__ == "__main__":
     main()

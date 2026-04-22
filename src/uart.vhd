@@ -1,15 +1,25 @@
 -- To send data through UART (then USB to the PC), we decompose data as follows:
+--
+--   [11:0]  adc_val_loc    (12-bit ADC sample)
+--   [27:12] next_adc_latch (16-bit time to next ADC sample)
+--   [31:28] reserved       (0x0)
+
 -- Packet format (sent on each trigger event):
---   Byte 0: xAA          (start-of-frame marker)
---   Byte 1: adc_high[3:0] (upper 4 bits of 12-bit ADC)
---   Byte 2: adc_low[7:0]  (lower 8 bits of 12-bit ADC)
---   Byte 3: x55          (end-of-frame marker)
--- meaning that:
--- - each byte costs 10 bits (8 actual bits + 2 framing bits), meaning that in total,
---   each packet costs 40 bits.
--- - the baud rate is 115200/s, meaning that the time between two bits is ~ 8.68 us,
---   meaning that each packet employs 40 * 8.68 u ~ 347 us to being transmitted.
--- - as we have at maximum a muon event each 100 ms, this is well within budget.
+-- 
+--   Byte 0:  0xAA                 (start-of-frame marker)
+--   Byte 1:  adc_val_loc[11:4]    (upper 8 bits of 12-bit ADC)
+--   Byte 2:  adc_val_loc[3:0]     (lower 4 bits + x"0" padding)
+--   Byte 3:  delta_t_latch[15:8]
+--   Byte 4:  delta_t_latch[7:0]
+--   Byte 5:  0x55                 (end-of-frame marker)
+--
+-- - Each byte costs 10 bits (8 actual bits + 2 framing bits), meaning that in total,
+--   each packet costs 80 bits
+-- - The baud rate is 115200/s, meaning that the time between two bits is ~ 8.68 us,
+--   meaning that each packet employs 80 * 8.68 u ~ 700 us to being transmitted
+-- - We have 60 samples per event (a pulse lasts 600 ns -> @ 100 MHz), so the total transmission
+--   time will be 700 us * 60 samples = 42000 us = 42 ms (56 if one considers also the 0th and 7th byte
+--   -> within budget
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -24,7 +34,7 @@ entity uart is
     -- Inputs 
     Clock       : in STD_LOGIC;
     Reset       : in STD_LOGIC;
-    adc_data    : in STD_LOGIC_VECTOR(11 downto 0); -- Data to send
+    adc_data    : in STD_LOGIC_VECTOR(31 downto 0); -- Data to send
     send_packet : in STD_LOGIC;                     -- High for 1 clock cycle to trigger transmission
 
     -- Outputs
@@ -38,8 +48,8 @@ architecture Rtl of uart is
   -- Clock ticks between two bits (duration of the pulse of each transmitted bit)
   constant CLKS_PER_BIT : NATURAL := CLK_FREQ / BAUD_RATE; -- ~ 868 @ 100 MHz
 
-  -- Packet of 4 bytes formed by [start][4 MSB][8 LSB][stop]
-  type packet_t is array (0 to 3) of STD_LOGIC_VECTOR(7 downto 0);
+  -- Packet of 6 bytes
+  type packet_t is array (0 to 5) of STD_LOGIC_VECTOR(7 downto 0);
   signal packet : packet_t;
 
   -- State machine used for transmission
@@ -48,7 +58,7 @@ architecture Rtl of uart is
 
   signal baud_cnt : NATURAL range 0 to CLKS_PER_BIT := 0;
   signal bit_idx : NATURAL range 0 to 7 := 0;
-  signal byte_idx : NATURAL range 0 to 3 := 0;
+  signal byte_idx : NATURAL range 0 to 5 := 0;
 
   -- Using the MARK/SPACE convention: 1 = MARK = no transmission
   signal tx_reg : STD_LOGIC := '1';
@@ -75,9 +85,11 @@ begin
             tx_reg <= '1';
             if send_packet = '1' then
               packet(0) <= x"AA"; -- SOF
-              packet(1) <= "0000" & adc_data(11 downto 8);
-              packet(2) <= adc_data(7 downto 0);
-              packet(3) <= x"55"; -- EOF
+              packet(1) <= adc_data(11 downto 4);
+              packet(2) <= adc_data(3 downto 0) & "0000";
+              packet(3) <= adc_data(27 downto 20);
+              packet(4) <= adc_data(19 downto 12);
+              packet(5) <= x"55"; -- EOF
               byte_idx <= 0;
               tx_state <= LOAD;
             end if;
@@ -121,7 +133,7 @@ begin
             end if;
 
           when NEXT_BYTE =>
-            if byte_idx = 3 then
+            if byte_idx = 5 then
               tx_state <= IDLE;
             else
               byte_idx <= byte_idx + 1;

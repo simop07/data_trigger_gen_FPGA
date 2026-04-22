@@ -35,9 +35,9 @@ architecture rtl of top is
 
   -- ADC data path signals
   signal adc_val_loc : STD_LOGIC_VECTOR(11 downto 0) := (others => '0');
-  signal adc_val_latched : STD_LOGIC_VECTOR(11 downto 0) := (others => '0');
-  signal adc_fifo_in : STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
-  signal adc_fifo_out : STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
+  signal adc_val_latched : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+  signal adc_fifo_in : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+  signal adc_fifo_out : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
 
   -- Trigger and in_pulse signals
   signal in_pulse_loc : STD_LOGIC := '0';
@@ -59,8 +59,10 @@ architecture rtl of top is
   signal read_en_loc : STD_LOGIC := '0';
   signal data_ready : STD_LOGIC := '0';
   signal wr_en_loc : STD_LOGIC := '0';
-  constant TickPeriodRead : unsigned(31 downto 0) := to_unsigned(2_000, 32); -- 20 us @ 100 MHz
-  signal PeriodicReadPulse : STD_LOGIC := '0';
+  constant TickPeriod : unsigned(31 downto 0) := to_unsigned(2_000, 32); -- 20 us @ 100 MHz
+  signal PeriodicPulse : STD_LOGIC := '0';
+  signal delta_t_latch : unsigned(15 downto 0);
+  signal counter_delta_t : unsigned(15 downto 0) := (others => '0');
 
 begin
 
@@ -158,10 +160,12 @@ begin
   -- Output trigger
   triggerOut <= trg_out_loc;
 
-  -- Use 16-bits adc for FIFO
-  adc_fifo_in <= x"0" & adc_val_loc;
+  -- Use 32-bits adc for FIFO with:
+  --  - [11:0] adc_val_loc
+  --  - [27:12] delta_t_latch (16-bit -> 650 us (enough as TickPeriod = 20 us))
+  adc_fifo_in <= x"0" & To_StdLogicVector(delta_t_latch) & adc_val_loc;
 
-  FIFO : entity work.fifo_generator_0
+  FIFO : entity work.fifo_generator_1
     port map(
       -- Inputs
       clk   => CLK,
@@ -184,27 +188,33 @@ begin
     if rising_edge(CLK) then
       if SyncStableReset = '1' then
         wr_en_loc <= '0';
+        counter_delta_t <= (others => '0');
       else
         -- Default behaviour: write nothing
         wr_en_loc <= '0';
+        counter_delta_t <= counter_delta_t + 1;
 
         -- Write on FIFO when in_pulse is asserted, FIFO is not almost full
         -- and slow mode is activated
-        if in_pulse_loc = '1' and almost_full_loc = '0' then
-          wr_en_loc <= not sw;
+        if (almost_full_loc = '0' and sw = '0') then
+          if (in_pulse_loc = '1' or TickPeriod = '1') then
+            delta_t_latch <= counter_delta_t;
+            counter_delta_t <= (others => '0');
+            wr_en_loc <= '1';
+          end if;
         end if;
 
       end if;
     end if;
   end process;
 
-  -- Generate periodic read every TickPeriodRead ticks
+  -- Generate periodic write/read every TickPeriod ticks
   PerRead : entity work.periodicTick
     port map(
       Clock      => CLK,
       Reset      => SyncStableReset,
-      TickPeriod => TickPeriodRead,
-      Tick       => PeriodicReadPulse
+      TickPeriod => TickPeriod,
+      Tick       => PeriodicPulse
     );
 
   -- Read ADC data from FIFO and transfer it via UART
@@ -225,13 +235,13 @@ begin
         if sw = '0' then
 
           -- Read FIFO periodically when FIFO is not empty and UART is not busy
-          read_en_loc <= PeriodicReadPulse and (not empty_loc) and (not uart_busy);
+          read_en_loc <= PeriodicPulse and (not empty_loc) and (not uart_busy);
 
           -- The standard read operation provides data on the cycle after it is requested
           data_ready <= read_en_loc;
 
           if data_ready = '1' then
-            adc_val_latched <= adc_fifo_out(11 downto 0);
+            adc_val_latched <= adc_fifo_out;
             send_packet_loc <= '1';
           end if;
 
