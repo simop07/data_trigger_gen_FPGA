@@ -16,7 +16,7 @@
 #include "waveformAnalysisPos.hpp"
 
 // Define global constants
-constexpr int nMinAnalysedRows{1};     // Minimum EXCLUDED
+constexpr int nMinAnalysedRows{2};    // Minimum EXCLUDED
 constexpr int nMaxAnalysedRows{1000};  // Maximum INCLUDED
 
 void setFitStyle() {
@@ -110,8 +110,9 @@ void waveformAnalysis() {
 
     // Fill empty ADC with NaN
     for (int i = 0; i < nMissing; i++) {
-      samples.push_back(std::numeric_limits<double>::quiet_NaN());
+      samples.push_back(100);
     }
+    samples.push_back(adc_value);
     ++row;
   }
 
@@ -326,4 +327,86 @@ void waveformAnalysis() {
   cPulsesSuperimp->Write();
   cPulsesSuperimp->Close();
   file1->Close();
+}
+
+void waveformTotal() {
+  R__LOAD_LIBRARY(waveformAnalysisPos_cpp.so);
+
+  TFile *file2 = new TFile("./../data/waveform.root", "RECREATE");
+  TCanvas *c2 = new TCanvas("c2", "Waveform reconstruction", 1500, 700);
+
+  std::ifstream infile("./../data/data.txt");
+  std::string line;
+
+  const double samplePeriod = 10.0;
+
+  // Usiamo due vector per memorizzare solo i punti reali esistenti
+  std::vector<double> samples;
+  std::vector<double> times;
+
+  int row = 0;
+  double currentTime = 0.0;  // Tracker del tempo assoluto
+
+  while (std::getline(infile, line)) {
+    if (row < nMinAnalysedRows) {
+      ++row;
+      continue;
+    }
+    if (row >= nMaxAnalysedRows) {
+      break;
+    }
+
+    std::stringstream ss(line);
+    std::string item;
+
+    double adc_value = 0.0;
+    double deltaT = 0.0;
+
+    int column = 0;
+    while (std::getline(ss, item, '\t')) {
+      if (item.empty()) {
+        ++column;
+        continue;
+      }
+      if (column == 0) adc_value = std::stod(item);
+      if (column == 1) deltaT = std::stod(item);
+      ++column;
+    }
+
+    // Invece di riempire i sample mancanti con 100,
+    // aggiorniamo il tempo assoluto basandoci sul deltaT letto.
+    // Se deltaT > samplePeriod, si creerà naturalmente un "salto" nel grafico.
+    currentTime += deltaT;
+
+    samples.push_back(adc_value);
+    times.push_back(currentTime);
+
+    ++row;
+  }
+
+  setFitStyle();
+
+  // Creiamo il grafico solo con i punti presenti
+  TGraph *g = new TGraph(samples.size(), times.data(), samples.data());
+
+  g->SetTitle("Reconstructed waveform; Time [ns]; ADC Counts");
+  g->SetLineColor(kBlue);
+  g->SetMarkerColor(kBlack);
+  g->SetLineWidth(3);
+  g->SetMarkerStyle(20);
+  g->SetMarkerSize(
+      1);  // Ridotto un po' per leggibilità, ma imposta pure a 3 se preferisci
+
+  c2->cd();
+
+  // "APL" disegna assi, punti e linee.
+  // Se vuoi vedere il "vuoto" netto senza linee che collegano punti lontani,
+  // usa "AP" (solo punti). Con "AL" ROOT tirerà una linea retta tra i due punti
+  // distanti.
+  g->Draw("AL");
+
+  file2->cd();
+  c2->Write();
+  c2->SaveAs("./../plots/full_waveform.pdf");
+  file2->Close();
 }

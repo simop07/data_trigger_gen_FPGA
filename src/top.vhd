@@ -66,6 +66,11 @@ architecture rtl of top is
   signal delta_t_latch : unsigned(17 downto 0);
   signal counter_delta_t : unsigned(17 downto 0) := (others => '0');
 
+  -- To monitor fast pulses through ILA
+  attribute mark_debug : STRING;
+  attribute mark_debug of in_pulse_loc : signal is "true";
+  attribute mark_debug of trg_out_loc : signal is "true";
+
 begin
 
   MuonGenerator : entity work.muonGenerator
