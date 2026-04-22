@@ -63,8 +63,8 @@ architecture rtl of top is
   constant TickPeriodWrite : unsigned(31 downto 0) := to_unsigned(200_000, 32); -- 2 ms @ 100 MHz
   signal PeriodicPulseRead : STD_LOGIC := '0';
   signal PeriodicPulseWrite : STD_LOGIC := '0';
-  signal delta_t_latch : unsigned(15 downto 0);
-  signal counter_delta_t : unsigned(15 downto 0) := (others => '0');
+  signal delta_t_latch : unsigned(17 downto 0);
+  signal counter_delta_t : unsigned(17 downto 0) := (others => '0');
 
 begin
 
@@ -164,8 +164,8 @@ begin
 
   -- Use 32-bits adc for FIFO with:
   --  - [11:0] adc_val_loc
-  --  - [27:12] delta_t_latch (16-bit -> 650 us
-  adc_fifo_in <= x"0" & STD_LOGIC_VECTOR(delta_t_latch) & adc_val_loc;
+  --  - [29:12] delta_t_latch (18-bit -> it gets slightly above 2 ms)
+  adc_fifo_in <= "00" & STD_LOGIC_VECTOR(delta_t_latch) & adc_val_loc;
 
   FIFO : entity work.fifo_generator_0
     port map(

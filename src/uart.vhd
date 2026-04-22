@@ -1,25 +1,24 @@
 -- To send data through UART (then USB to the PC), we decompose data as follows:
 --
 --   [11:0]  adc_val_loc    (12-bit ADC sample)
---   [27:12] next_adc_latch (16-bit time to next ADC sample)
---   [31:28] reserved       (0x0)
+--   [29:12] next_adc_latch (18-bit time to next ADC sample)
+--   [31:20] reserved       (0b00)
 
 -- Packet format (sent on each trigger event):
 -- 
---   Byte 0:  0xAA                 (start-of-frame marker)
---   Byte 1:  adc_val_loc[11:4]    (upper 8 bits of 12-bit ADC)
---   Byte 2:  adc_val_loc[3:0]     (lower 4 bits + x"0" padding)
+--   Byte 0:  0xAA
+--   Byte 1:  adc_val_loc[11:4]
+--   Byte 2:  adc_val_loc[3:0] & "00" & delta_t_latch[17:16]
 --   Byte 3:  delta_t_latch[15:8]
 --   Byte 4:  delta_t_latch[7:0]
---   Byte 5:  0x55                 (end-of-frame marker)
+--   Byte 5:  0x55
 --
 -- - Each byte costs 10 bits (8 actual bits + 2 framing bits), meaning that in total,
 --   each packet costs 80 bits
 -- - The baud rate is 115200/s, meaning that the time between two bits is ~ 8.68 us,
---   meaning that each packet employs 80 * 8.68 u ~ 700 us to being transmitted
+--   meaning that each packet employs 50 * 8.68 u ~ 400 us to being transmitted
 -- - We have 60 samples per event (a pulse lasts 600 ns -> @ 100 MHz), so the total transmission
---   time will be 700 us * 60 samples = 42000 us = 42 ms (56 if one considers also the 0th and 7th byte
---   -> within budget
+--   time will be 400 us * 60 samples = 24000 us = 24 ms (within budget)
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -86,7 +85,7 @@ begin
             if send_packet = '1' then
               packet(0) <= x"AA"; -- SOF
               packet(1) <= adc_data(11 downto 4);
-              packet(2) <= adc_data(3 downto 0) & "0000";
+              packet(2) <= adc_data(3 downto 0) & "00" & adc_data(29 downto 28);
               packet(3) <= adc_data(27 downto 20);
               packet(4) <= adc_data(19 downto 12);
               packet(5) <= x"55"; -- EOF

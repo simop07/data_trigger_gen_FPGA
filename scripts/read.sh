@@ -50,7 +50,7 @@ def main():
             buf.append(b[0])
 
             # Keep length of array fixed
-            if len(buf) > 8:
+            if len(buf) > 6:
                 buf.pop(0)
 
             # Search for valid data frame: AA xx xx 55
@@ -60,10 +60,9 @@ def main():
                     b2 = buf[2]
                     b3 = buf[3]
                     b4 = buf[4]
-                    b5 = buf[5]
 
-                    adc = (b1 << 4) | (b2 >> 4)
-                    time_ns = ((b3 << 8) | b4) * 10 # In [ns]
+                    adc = (b1 << 4) | ((b2 & 0xF0) >> 4)
+                    time_ns = (((b2 & 0x3) << 17) | (b3 << 8) | b4) * 10 # In [ns]
 
                     print(adc, time_ns, sep="\t", flush=True)
 
