@@ -163,9 +163,9 @@ begin
   -- Use 32-bits adc for FIFO with:
   --  - [11:0] adc_val_loc
   --  - [27:12] delta_t_latch (16-bit -> 650 us (enough as TickPeriod = 20 us))
-  adc_fifo_in <= x"0" & To_StdLogicVector(delta_t_latch) & adc_val_loc;
+  adc_fifo_in <= x"0" & STD_LOGIC_VECTOR(delta_t_latch) & adc_val_loc;
 
-  FIFO : entity work.fifo_generator_1
+  FIFO : entity work.fifo_generator_0
     port map(
       -- Inputs
       clk   => CLK,
@@ -197,7 +197,7 @@ begin
         -- Write on FIFO when in_pulse is asserted, FIFO is not almost full
         -- and slow mode is activated
         if (almost_full_loc = '0' and sw = '0') then
-          if (in_pulse_loc = '1' or TickPeriod = '1') then
+          if (in_pulse_loc = '1' or PeriodicPulse = '1') then
             delta_t_latch <= counter_delta_t;
             counter_delta_t <= (others => '0');
             wr_en_loc <= '1';
