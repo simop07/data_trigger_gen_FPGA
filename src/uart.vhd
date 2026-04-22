@@ -14,11 +14,11 @@
 --   Byte 5:  0x55
 --
 -- - Each byte costs 10 bits (8 actual bits + 2 framing bits), meaning that in total,
---   each packet costs 80 bits
+--   each packet costs 60 bits
 -- - The baud rate is 115200/s, meaning that the time between two bits is ~ 8.68 us,
---   meaning that each packet employs 50 * 8.68 u ~ 400 us to being transmitted
+--   meaning that each packet employs 60 * 8.68 u ~ 520 us to being transmitted
 -- - We have 60 samples per event (a pulse lasts 600 ns -> @ 100 MHz), so the total transmission
---   time will be 400 us * 60 samples = 24000 us = 24 ms (within budget)
+--   time will be 520 us * 60 samples = 31 ms (within budget)
 
 library IEEE;
 use IEEE.std_logic_1164.all;

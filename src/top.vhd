@@ -60,7 +60,7 @@ architecture rtl of top is
   signal data_ready : STD_LOGIC := '0';
   signal wr_en_loc : STD_LOGIC := '0';
   constant TickPeriodRead : unsigned(31 downto 0) := to_unsigned(2_000, 32); -- 20 us @ 100 MHz
-  constant TickPeriodWrite : unsigned(31 downto 0) := to_unsigned(200_000, 32); -- 2 ms @ 100 MHz
+  constant TickPeriodWrite : unsigned(31 downto 0) := to_unsigned(2_000_000, 32); -- 20 ms @ 100 MHz
   signal PeriodicPulseRead : STD_LOGIC := '0';
   signal PeriodicPulseWrite : STD_LOGIC := '0';
   signal delta_t_latch : unsigned(17 downto 0);
