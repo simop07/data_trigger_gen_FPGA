@@ -59,8 +59,10 @@ architecture rtl of top is
   signal read_en_loc : STD_LOGIC := '0';
   signal data_ready : STD_LOGIC := '0';
   signal wr_en_loc : STD_LOGIC := '0';
-  constant TickPeriod : unsigned(31 downto 0) := to_unsigned(2_000, 32); -- 20 us @ 100 MHz
-  signal PeriodicPulse : STD_LOGIC := '0';
+  constant TickPeriodRead : unsigned(31 downto 0) := to_unsigned(2_000, 32); -- 20 us @ 100 MHz
+  constant TickPeriodWrite : unsigned(31 downto 0) := to_unsigned(200_000, 32); -- 2 ms @ 100 MHz
+  signal PeriodicPulseRead : STD_LOGIC := '0';
+  signal PeriodicPulseWrite : STD_LOGIC := '0';
   signal delta_t_latch : unsigned(15 downto 0);
   signal counter_delta_t : unsigned(15 downto 0) := (others => '0');
 
@@ -162,7 +164,7 @@ begin
 
   -- Use 32-bits adc for FIFO with:
   --  - [11:0] adc_val_loc
-  --  - [27:12] delta_t_latch (16-bit -> 650 us (enough as TickPeriod = 20 us))
+  --  - [27:12] delta_t_latch (16-bit -> 650 us
   adc_fifo_in <= x"0" & STD_LOGIC_VECTOR(delta_t_latch) & adc_val_loc;
 
   FIFO : entity work.fifo_generator_0
@@ -197,7 +199,7 @@ begin
         -- Write on FIFO when in_pulse is asserted, FIFO is not almost full
         -- and slow mode is activated
         if (almost_full_loc = '0' and sw = '0') then
-          if (in_pulse_loc = '1' or PeriodicPulse = '1') then
+          if (in_pulse_loc = '1' or PeriodicPulseWrite = '1') then
             delta_t_latch <= counter_delta_t;
             counter_delta_t <= (others => '0');
             wr_en_loc <= '1';
@@ -208,13 +210,22 @@ begin
     end if;
   end process;
 
-  -- Generate periodic write/read every TickPeriod ticks
+  -- Generate periodic read every TickPeriodRead ticks
   PerRead : entity work.periodicTick
     port map(
       Clock      => CLK,
       Reset      => SyncStableReset,
-      TickPeriod => TickPeriod,
-      Tick       => PeriodicPulse
+      TickPeriod => TickPeriodRead,
+      Tick       => PeriodicPulseRead
+    );
+
+  -- Generate periodic write every TickPeriodWrite ticks
+  PerWrite : entity work.periodicTick
+    port map(
+      Clock      => CLK,
+      Reset      => SyncStableReset,
+      TickPeriod => TickPeriodWrite,
+      Tick       => PeriodicPulseWrite
     );
 
   -- Read ADC data from FIFO and transfer it via UART
