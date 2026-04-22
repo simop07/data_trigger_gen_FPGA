@@ -246,7 +246,7 @@ begin
         if sw = '0' then
 
           -- Read FIFO periodically when FIFO is not empty and UART is not busy
-          read_en_loc <= PeriodicPulse and (not empty_loc) and (not uart_busy);
+          read_en_loc <= PeriodicPulseRead and (not empty_loc) and (not uart_busy);
 
           -- The standard read operation provides data on the cycle after it is requested
           data_ready <= read_en_loc;
