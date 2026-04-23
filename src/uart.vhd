@@ -8,7 +8,7 @@
 -- 
 --   Byte 0:  0xAA
 --   Byte 1:  adc_val_loc[11:4]
---   Byte 2:  adc_val_loc[3:0] & "00" & delta_t_latch[17:16]
+--   Byte 2:  adc_val_loc[3:0] & delta_t_latch[19:16]
 --   Byte 3:  delta_t_latch[15:8]
 --   Byte 4:  delta_t_latch[7:0]
 --   Byte 5:  0x55
@@ -85,7 +85,7 @@ begin
             if send_packet = '1' then
               packet(0) <= x"AA"; -- SOF
               packet(1) <= adc_data(11 downto 4);
-              packet(2) <= adc_data(3 downto 0) & "00" & adc_data(29 downto 28);
+              packet(2) <= adc_data(3 downto 0) & adc_data(31 downto 28);
               packet(3) <= adc_data(27 downto 20);
               packet(4) <= adc_data(19 downto 12);
               packet(5) <= x"55"; -- EOF

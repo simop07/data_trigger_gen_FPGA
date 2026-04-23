@@ -53,7 +53,7 @@ def main():
             if len(buf) > 6:
                 buf.pop(0)
 
-            # Search for valid data frame: AA xx xx 55
+            # Search for valid data frame
             if len(buf) == 6:
                 if buf[0] == SOF and buf[5] == EOF_MARK:
                     b1 = buf[1]
@@ -62,7 +62,7 @@ def main():
                     b4 = buf[4]
 
                     adc = (b1 << 4) | ((b2 & 0xF0) >> 4)
-                    time_ns = (((b2 & 0x3) << 17) | (b3 << 8) | b4) * 10 # In [ns]
+                    time_ns = (((b2 & 0xF) << 16) | (b3 << 8) | b4) * 10 # In [ns]
 
                     print(adc, time_ns, sep="\t", flush=True)
 
