@@ -27,6 +27,7 @@ entity top is
     BTNC       : in  STD_LOGIC; -- High when pressed
     sw         : in  STD_LOGIC; -- Change generator rate
     triggerOut : out STD_LOGIC; -- JA1 Pmod
+    triggerOut2 : out STD_LOGIC; -- JA2 Pmod
     uart_to_pc : out STD_LOGIC; -- UART transmission;
     led        : out STD_LOGIC_VECTOR(5 downto 0)
   );
@@ -176,6 +177,7 @@ begin
 
   -- Output trigger
   triggerOut <= trg_out_loc;
+  triggerOut2 <= trg_out_loc;
 
   -- Use 32-bits adc for FIFO with:
   --  - [11:0] adc_val_loc
