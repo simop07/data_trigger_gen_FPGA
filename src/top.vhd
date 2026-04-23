@@ -78,7 +78,8 @@ begin
     port map(
       clk       => CLK,
       probe0(0) => in_pulse_loc,
-      probe1(0) => trg_out_loc
+      probe1(0) => trg_out_loc,
+      probe2(0) => almost_full_loc
     );
 
   MuonGenerator : entity work.muonGenerator
