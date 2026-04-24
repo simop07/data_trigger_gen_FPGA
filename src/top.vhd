@@ -7,7 +7,7 @@
 --  CLK         | W5       | Onboard oscillator    | Dedicated 100 MHz
 --  BTNC        | U18      | Button btnC (central) | Active-HIGH
 --  trigger_out | J1       | PMOD JA, pin 1 (left) | -> GPIO Altera board
---  trigger_out | L2       | PMOD JA, pin 2 (left) | -> GPIO Altera board
+--  trigger_out | L2       | PMOD JA, pin 2 (left) | -> Oscilloscope
 --  uart_to_pc  | A18      | USB-UART RsTx (top)   | -> PC via USB
 --  led[0]      | U16      | LD0                   | Active muon pulse
 --  led[1]      | E19      | LD1                   | Shooted trigger
@@ -23,13 +23,13 @@ use IEEE.numeric_std.all;
 
 entity top is
   port (
-    CLK        : in  STD_LOGIC; -- 100 MHz clock
-    BTNC       : in  STD_LOGIC; -- High when pressed
-    sw         : in  STD_LOGIC; -- Change generator rate
-    triggerOut : out STD_LOGIC; -- JA1 Pmod
-    triggerOut2 : out STD_LOGIC; -- JA2 Pmod
-    uart_to_pc : out STD_LOGIC; -- UART transmission;
-    led        : out STD_LOGIC_VECTOR(5 downto 0)
+    CLK         : in  STD_LOGIC; -- 100 MHz clock
+    BTNC        : in  STD_LOGIC; -- High when pressed
+    sw          : in  STD_LOGIC; -- Change generator rate
+    triggerOut  : out STD_LOGIC; -- JA2 Pmod
+    triggerOut2 : out STD_LOGIC; -- JA1 Pmod
+    uart_to_pc  : out STD_LOGIC; -- UART transmission;
+    led         : out STD_LOGIC_VECTOR(5 downto 0)
   );
 end entity;
 
