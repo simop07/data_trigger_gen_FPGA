@@ -62,7 +62,7 @@ def main():
                     b4 = buf[4]
 
                     adc = (b1 << 4) | ((b2 & 0xF0) >> 4)
-                    time_ns = (((b2 & 0xF) << 16) | (b3 << 8) | b4) * 10 # In [ns]
+                    time_ns = ((((b2 & 0xF) << 16) | (b3 << 8) | b4) * 10 + 10) # In [ns]
 
                     print(adc, time_ns, sep="\t", flush=True)
 

@@ -16,8 +16,8 @@
 #include "waveformAnalysisPos.hpp"
 
 // Define global constants
-constexpr int nMinAnalysedRows{2};     // Minimum EXCLUDED
-constexpr int nMaxAnalysedRows{1000};  // Maximum INCLUDED
+constexpr int nMinAnalysedRows{2};    // Minimum EXCLUDED
+constexpr int nMaxAnalysedRows{200};  // Maximum INCLUDED
 
 void setFitStyle() {
   gROOT->SetStyle("Plain");
@@ -101,7 +101,7 @@ void waveformAnalysis() {
       }
 
       if (column == 1) {
-        deltaT = std::stod(item);  // DeltaT in [ns]
+        deltaT = (std::stod(item) - 10);  // DeltaT in [ns]
       }
       ++column;
     }
@@ -371,7 +371,7 @@ void waveformTotal() {
         adc_value = std::stod(item);
       }
       if (column == 1) {
-        deltaT = std::stod(item);
+        deltaT = (std::stod(item) - 10);
       }
       ++column;
     }
@@ -397,7 +397,7 @@ void waveformTotal() {
 
   c2->cd();
 
-  g->Draw("AL");
+  g->Draw("ALP");
 
   file2->cd();
   c2->Write();
