@@ -45,6 +45,7 @@
 *.svg
 
 # Directories
+data_trigger_simone_pasquini
 
 # Miscellaneous
 nicolasLoop.cpp
