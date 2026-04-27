@@ -1,3 +1,8 @@
+// To compile in SHELL:
+// "g++ waveformAnalysisPos.cpp analysis.cpp `root-config --cflags --libs`"
+// Best data to show fit is DataF_CH0@DT5730S_59483_run_new_1300_2-3.5 with Refl
+// PMT conversion factor inside data/miscellaneous
+
 #include <fstream>
 #include <limits>
 #include <sstream>
@@ -16,7 +21,7 @@
 #include "waveformAnalysisPos.hpp"
 
 // Define global constants
-constexpr int nMinAnalysedRows{2};    // Minimum EXCLUDED
+constexpr int nMinAnalysedRows{2};  // Minimum EXCLUDED (>= 2)
 constexpr int nMaxAnalysedRows{200};  // Maximum INCLUDED
 
 void setFitStyle() {
@@ -146,12 +151,12 @@ void waveformAnalysis() {
 
   // Create graph for summing pulses
   TGraph *gPulseSum = new TGraph(map.size(), xValues.data(), yValues.data());
-  gPulseSum->SetTitle("; Time after trigger [ns]; ADC Counts");
+  gPulseSum->SetTitle("; Time after transmission [ns]; ADC Counts");
   gPulseSum->SetLineColor(kBlue);
   gPulseSum->SetLineWidth(3);
-  gPulseSum->SetMarkerColor(kBlack);
   gPulseSum->SetMarkerStyle(20);
   gPulseSum->SetMarkerSize(1);
+  gPulseSum->SetMarkerColor(kBlack);
 
   // gPulseSum relevant parameters
   // gPulseSum relevant parameters
@@ -241,8 +246,8 @@ void waveformAnalysis() {
     g->SetMarkerColor(kBlack);
     g->SetMarkerStyle(20);
     g->SetMarkerSize(1);
-    g->SetTitle(
-        Form("Pulse %d; Time after trigger [ns]; ADC counts", pulseCounter));
+    g->SetTitle(Form("Pulse %d; Time after transmission [ns]; ADC counts",
+                     pulseCounter));
     graphs.push_back(g);
 
     // Superimpose pulses from riseTime
@@ -296,7 +301,7 @@ void waveformAnalysis() {
   mg->Draw("ALP");
   mg->SetTitle("Pulses");
   mg->SetName("Regions of pulses");
-  mg->GetXaxis()->SetTitle("Time after trigger [ns]");
+  mg->GetXaxis()->SetTitle("Time after transmission [ns]");
   mg->GetYaxis()->SetTitle("ADC Counts");
 
   // Create canvas to superimpose all pulses of one file
@@ -386,21 +391,28 @@ void waveformTotal() {
 
   setFitStyle();
 
-  TGraph *g = new TGraph(samples.size(), times.data(), samples.data());
+  TGraph *totG = new TGraph(samples.size(), times.data(), samples.data());
 
-  g->SetTitle("Reconstructed waveform; Time [ns]; ADC Counts");
-  g->SetLineColor(kBlue);
-  g->SetMarkerColor(kBlack);
-  g->SetLineWidth(3);
-  g->SetMarkerStyle(20);
-  g->SetMarkerSize(1);
+  totG->SetTitle("Reconstructed waveform; Time [ns]; ADC Counts");
+  totG->SetLineColor(kBlue);
+  totG->SetMarkerColor(kBlack);
+  totG->SetLineWidth(3);
+  totG->SetMarkerStyle(20);
+  totG->SetMarkerSize(1);
 
   c2->cd();
 
-  g->Draw("ALP");
+  totG->Draw("ALP");
 
   file2->cd();
   c2->Write();
   c2->SaveAs("./../plots/full_waveform.pdf");
   file2->Close();
+}
+
+int main() {
+  waveformAnalysis();
+  waveformTotal();
+
+  return EXIT_SUCCESS;
 }
