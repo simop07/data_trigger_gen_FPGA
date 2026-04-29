@@ -3,7 +3,7 @@
 # FPGA-based system for the emulation of a detector digitized dignal and trigger distribution
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19881390.svg)](https://doi.org/10.5281/zenodo.19881390)
-[![GitHub license](https://img.shields.io/github/license/simop07/data_trigger_gen_FPGA](https://github.com/simop07/data_trigger_gen_FPGA/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/simop07/data_trigger_gen_FPGA)](https://github.com/simop07/data_trigger_gen_FPGA/blob/main/LICENSE)
 
 ## Overview
 
