@@ -22,7 +22,7 @@
 
 // Define global constants
 constexpr int nMinAnalysedRows{2};  // Minimum EXCLUDED (>= 2)
-constexpr int nMaxAnalysedRows{200};  // Maximum INCLUDED
+constexpr int nMaxAnalysedRows{1000};  // Maximum INCLUDED
 
 void setFitStyle() {
   gROOT->SetStyle("Plain");
