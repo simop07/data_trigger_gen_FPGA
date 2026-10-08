@@ -1,9 +1,15 @@
-cff-version: 1.1.0
-message: "If you use this software, please cite it as below."
+abstract: FPGA-based emulator of a cosmic muon detector signal and trigger distribution
+  system, implemented in VHDL with C++/ROOT offline analysis.
 authors:
-- family-names: Joe
-  given-names: Johnson
-orcid: https://orcid.org/0000-0000-0000-0000
-title:simop07/data_trigger_gen_FPGA: v1.0.0
+- affiliation: DIFA UniBo
+  family-names: Simone Pasquini
+cff-version: 1.2.0
+date-released: '2026-04-29'
+doi: 10.5281/zenodo.19881390
+license:
+- cc-by-4.0
+message: If you use this software, please cite it using the metadata from this file.
+repository-code: https://github.com/simop07/data_trigger_gen_FPGA/tree/v1.0.0
+title: 'simop07/data_trigger_gen_FPGA: v1.0.0'
+type: software
 version: v1.0.0
-date-released: 2026-04-29
