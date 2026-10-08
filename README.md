@@ -17,8 +17,6 @@ Two boards are used:
 
 For a full description of the physics and the experimental setup, see [`PasquiniSimone_DataTriggerGeneration.pdf`](PasquiniSimone_DataTriggerGeneration.pdf).
 
-![Experimental setup](images/experimentalSetup.svg)
-
 ---
 
 ## Repository structure
